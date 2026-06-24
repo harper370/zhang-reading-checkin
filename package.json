@@ -1,14 +1,12 @@
 {
   "name": "zhang-reading-checkin",
   "version": "1.0.0",
-  "description": "张家每日读书打卡 - 全家共享读书打卡小程序",
+  "description": "张家每日读书打卡",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
   "engines": {
     "node": ">=18"
-  },
-  "dependencies": {},
-  "devDependencies": {}
+  }
 }
