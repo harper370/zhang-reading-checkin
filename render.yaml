@@ -1,0 +1,8 @@
+services:
+  - type: web
+    name: zhang-reading
+    runtime: node
+    buildCommand: echo ok
+    startCommand: node server.js
+    repo: https://github.com/harper370/zhang-reading-checkin
+    plan: free
