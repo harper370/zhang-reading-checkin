@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>📚 张家读书打卡 - 入口</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: linear-gradient(135deg, #FFF5EE 0%, #FFF0E8 50%, #FFE8E0 100%);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .card {
+    background: white;
+    border-radius: 24px;
+    padding: 40px 28px;
+    text-align: center;
+    box-shadow: 0 8px 32px rgba(255, 140, 105, 0.15);
+    max-width: 380px;
+    width: 100%;
+  }
+  .icon { font-size: 64px; display: block; margin-bottom: 12px; animation: float 3s ease-in-out infinite; }
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+  h1 {
+    font-size: 22px;
+    font-weight: 800;
+    background: linear-gradient(135deg, #FF8C69, #FF6B6B);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 8px;
+  }
+  .subtitle { font-size: 13px; color: #8B7355; margin-bottom: 28px; }
+  
+  .btn {
+    display: block;
+    width: 100%;
+    padding: 16px;
+    font-size: 17px;
+    font-weight: 700;
+    border: none;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.3s;
+    margin-bottom: 12px;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, #FF8C69, #FF6B6B);
+    color: white;
+    box-shadow: 0 6px 20px rgba(255, 107, 107, 0.35);
+  }
+  .btn-primary:hover { transform: translateY(-2px); }
+  .btn-primary:active { transform: scale(0.96); }
+  .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+  
+  .status {
+    font-size: 13px;
+    color: #8B7355;
+    margin-top: 16px;
+    padding: 10px;
+    border-radius: 12px;
+    background: #FFFBF7;
+  }
+  .status.success { color: #6B9B6F; background: #E8F5E9; }
+  .status.loading { color: #E8A040; background: #FFF8E1; }
+  .status.error { color: #D35; background: #FFF0F0; }
+  
+  .spinner {
+    display: inline-block;
+    width: 16px; height: 16px;
+    border: 2px solid #E8A040;
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin-right: 6px;
+    vertical-align: middle;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+<div class="card">
+  <span class="icon">📚</span>
+  <h1>张家每日读书打卡</h1>
+  <p class="subtitle">👨‍👩‍👧‍👦 全家一起读，书香伴成长</p>
+  
+  <button class="btn btn-primary" id="btnGo" onclick="checkAndGo()">
+    📖 进入读书打卡
+  </button>
+  
+  <div class="status loading" id="status">
+    <span class="spinner"></span> 正在连接服务...
+  </div>
+</div>
+
+<script>
+// 读书打卡服务地址（Cloudflare Tunnel）
+const SERVICE_URL = 'https://eligible-houston-titten-suzuki.trycloudflare.com';
+
+async function checkAndGo() {
+  const btn = document.getElementById('btnGo');
+  const status = document.getElementById('status');
+  
+  btn.disabled = true;
+  btn.textContent = '⏳ 正在连接...';
+  status.className = 'status loading';
+  status.innerHTML = '<span class="spinner"></span> 正在连接打卡服务，请稍候...';
+  
+  try {
+    const res = await fetch(SERVICE_URL + '/api/records', { 
+      method: 'GET',
+      signal: AbortSignal.timeout(15000)
+    });
+    
+    if (res.ok) {
+      status.className = 'status success';
+      status.innerHTML = '✅ 服务已连接！正在跳转...';
+      btn.textContent = '✅ 已连接！';
+      
+      // 跳转到打卡页面
+      setTimeout(() => {
+        window.location.href = SERVICE_URL;
+      }, 500);
+    } else {
+      throw new Error('服务响应异常');
+    }
+  } catch (e) {
+    status.className = 'status error';
+    status.innerHTML = '⚠️ 服务暂未响应，请稍后再试<br><small>提示：如果服务休眠了，请在和 AI 助手的对话中说「重启读书打卡」</small>';
+    btn.disabled = false;
+    btn.textContent = '🔄 重新连接';
+  }
+}
+
+// 页面加载时自动检测
+window.addEventListener('load', async () => {
+  // 尝试快速检测
+  try {
+    const res = await fetch(SERVICE_URL + '/api/records', {
+      method: 'GET',
+      signal: AbortSignal.timeout(8000)
+    });
+    if (res.ok) {
+      document.getElementById('status').className = 'status success';
+      document.getElementById('status').innerHTML = '✅ 服务在线，可以直接进入';
+      document.getElementById('btnGo').textContent = '📖 立即进入打卡';
+    }
+  } catch (e) {
+    document.getElementById('status').className = 'status loading';
+    document.getElementById('status').innerHTML = '💤 服务可能在休眠中<br>点击上方按钮唤醒并进入';
+    document.getElementById('btnGo').textContent = '🚀 唤醒并进入打卡';
+  }
+});
+</script>
+</body>
+</html>
